@@ -1,0 +1,178 @@
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 max(var(--space-4), env(safe-area-inset-left));
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+}
+
+.site-title { font-size: 1.125rem; font-weight: 700; }
+.site-sub { margin-left: var(--space-2); font-size: 0.8125rem; font-weight: 400; color: var(--text-muted); }
+
+.icon-btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 1.125rem;
+}
+
+#app { padding-top: var(--space-4); padding-bottom: var(--space-5); }
+
+.banner {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.875rem;
+}
+
+.section-title { margin: var(--space-5) 0 var(--space-3); font-size: 1rem; font-weight: 700; }
+
+.section-title-first { margin-top: 0; }
+
+/* 최상단 행: 제목 + 기준 분기 선택 */
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.top-row .section-title { margin-bottom: 0; }
+.quarter-picker { display: flex; align-items: center; gap: var(--space-2); font-size: 0.8125rem; color: var(--text-muted); }
+.select {
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 700;
+}
+
+/* 새 데이터 반영 알림 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  z-index: 20;
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.875rem;
+  transform: translateX(-50%);
+}
+
+/* 표에서 기준 분기 열 강조 */
+th.col-active, td.col-active { background: var(--accent-soft); color: var(--text); font-weight: 700; }
+
+/* 지표 탭: 모바일에서는 가로 스크롤 */
+.tabs {
+  position: relative; /* 탭의 offsetLeft 기준 */
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--text); font-weight: 700; }
+
+/* 순위 막대 행: 눌러서 신탁사 선택 */
+.chart .bar-row { cursor: pointer; outline: none; }
+.chart .bar-row:hover .hit { fill: var(--accent-soft); }
+.chart .bar-row:focus-visible .hit { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+
+.kpi {
+  display: grid;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+.kpi[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.kpi-name { font-size: 0.8125rem; color: var(--text-muted); }
+.kpi-value { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi-delta { font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.kpi-delta .up { color: var(--up); }
+.kpi-delta .down { color: var(--down); }
+.kpi svg { width: 100%; height: 28px; }
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.card + .card { margin-top: var(--space-3); }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
+.card-title { font-size: 1rem; font-weight: 700; }
+.card-note { font-size: 0.75rem; color: var(--text-muted); }
+
+.card-basis { margin: calc(-1 * var(--space-1)) 0 var(--space-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: 0.75rem; color: var(--text-muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+
+.chart { width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--text-muted); font-size: 11px; font-family: var(--font-body); }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .line-main { fill: none; stroke: var(--series-1); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .line-ref { fill: none; stroke: var(--series-2); stroke-width: 2; stroke-dasharray: 5 4; }
+.chart .dot { fill: var(--series-1); }
+.chart .bar { fill: var(--bar); }
+.chart .bar.active { fill: var(--bar-active); }
+.chart .bar-label { fill: var(--text); }
+.chart .bar-label.active { font-weight: 700; }
+.chart .hit { fill: transparent; }
+.chart .tip-bg { fill: var(--text); }
+.chart .tip-text { fill: var(--bg); font-size: 11px; }
+
+.table-wrap { overflow-x: auto; }
+.card-table { margin-top: var(--space-4); }
+table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+th, td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+th { color: var(--text-muted); font-weight: 500; }
+
+details > summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+
+.site-footer { padding-top: var(--space-4); padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom)); font-size: 0.75rem; }
+
+@media (min-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+}

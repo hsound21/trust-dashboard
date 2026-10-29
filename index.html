@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>부동산신탁사 재무지표</title>
+  <meta name="description" content="금융감독원 FISIS 기반 부동산신탁사 최근 12분기 재무 지표">
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="신탁지표">
+  <script>
+    // FOUC 방지: CSS보다 먼저 테마 적용
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem('theme'); } catch (e) {}
+      if (!theme) theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <h1 class="site-title">부동산신탁사 재무 현황</h1>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="다크 모드 전환">◐</button>
+    </div>
+  </header>
+  <main class="container" id="app">
+    <p class="muted">불러오는 중…</p>
+  </main>
+  <footer class="container site-footer">
+    <p id="source-note" class="muted"></p>
+  </footer>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

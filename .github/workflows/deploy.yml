@@ -1,0 +1,46 @@
+name: 데이터 갱신 및 GitHub Pages 배포
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Actions 탭에서 수동 실행
+  schedule:
+    - cron: '0 21 * * *' # 매일 06:00 KST — FISIS에 새 데이터가 있으면 반영해 재배포
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      FISIS_API_KEY: ${{ secrets.FISIS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 시크릿이 등록돼 있을 때만 실제 데이터로 data/trusts.json 을 덮어씀
+      - name: FISIS 데이터 수집
+        if: env.FISIS_API_KEY != ''
+        run: node scripts/fetch-fisis.mjs
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
