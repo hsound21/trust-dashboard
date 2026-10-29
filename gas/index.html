@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    // FOUC 방지: CSS보다 먼저 테마 적용
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem('theme'); } catch (e) {}
+      if (!theme) theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <style>
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c2128;
+  --text-muted: #5b6573;
+  --border: #e1e5ea;
+  --accent: #2563eb;
+  --accent-soft: #e3ecfd;
+  --up: #d03a3a;
+  --down: #2563eb;
+  --series-1: #2563eb;
+  --series-2: #94a3b8;
+  --bar: #c5d3ea;
+  --bar-active: #2563eb;
+  --warn-bg: #fff4d6;
+  --warn-text: #6b4a00;
+  --radius: 14px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+  --font-body: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
+  --tap: 44px;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #14171c;
+  --surface: #1d2128;
+  --text: #e6e8eb;
+  --text-muted: #a3acb8;
+  --border: #2d333c;
+  --accent: #6ea0ff;
+  --accent-soft: #24324d;
+  --up: #ff7b7b;
+  --down: #7aa7ff;
+  --series-1: #6ea0ff;
+  --series-2: #7b8696;
+  --bar: #35435c;
+  --bar-active: #6ea0ff;
+  --warn-bg: #3a3017;
+  --warn-text: #f1d58b;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+button, select { font: inherit; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.muted { color: var(--text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 max(var(--space-4), env(safe-area-inset-left));
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+}
+
+.site-title { font-size: 1.125rem; font-weight: 700; }
+.site-sub { margin-left: var(--space-2); font-size: 0.8125rem; font-weight: 400; color: var(--text-muted); }
+
+.icon-btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 1.125rem;
+}
+
+#app { padding-top: var(--space-4); padding-bottom: var(--space-5); }
+
+.banner {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  font-size: 0.875rem;
+}
+
+.section-title { margin: var(--space-5) 0 var(--space-3); font-size: 1rem; font-weight: 700; }
+
+.section-title-first { margin-top: 0; }
+
+/* 최상단 행: 제목 + 기준 분기 선택 */
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.top-row .section-title { margin-bottom: 0; }
+.quarter-picker { display: flex; align-items: center; gap: var(--space-2); font-size: 0.8125rem; color: var(--text-muted); }
+.select {
+  min-height: var(--tap);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 700;
+}
+
+/* 새 데이터 반영 알림 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  z-index: 20;
+  max-width: calc(100% - 2 * var(--space-4));
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.875rem;
+  transform: translateX(-50%);
+}
+
+/* 표에서 기준 분기 열 강조 */
+th.col-active, td.col-active { background: var(--accent-soft); color: var(--text); font-weight: 700; }
+
+/* 지표 탭: 모바일에서는 가로 스크롤 */
+.tabs {
+  position: relative; /* 탭의 offsetLeft 기준 */
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: none;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--text); font-weight: 700; }
+
+/* 순위 막대 행: 눌러서 신탁사 선택 */
+.chart .bar-row { cursor: pointer; outline: none; }
+.chart .bar-row:hover .hit { fill: var(--accent-soft); }
+.chart .bar-row:focus-visible .hit { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+
+.kpi {
+  display: grid;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+.kpi[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.kpi-name { font-size: 0.8125rem; color: var(--text-muted); }
+.kpi-value { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi-delta { font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.kpi-delta .up { color: var(--up); }
+.kpi-delta .down { color: var(--down); }
+.kpi svg { width: 100%; height: 28px; }
+
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.card + .card { margin-top: var(--space-3); }
+.card-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3); }
+.card-title { font-size: 1rem; font-weight: 700; }
+.card-note { font-size: 0.75rem; color: var(--text-muted); }
+
+.card-basis { margin: calc(-1 * var(--space-1)) 0 var(--space-3); }
+
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); font-size: 0.75rem; color: var(--text-muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+
+.chart { width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--text-muted); font-size: 11px; font-family: var(--font-body); }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .line-main { fill: none; stroke: var(--series-1); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .line-ref { fill: none; stroke: var(--series-2); stroke-width: 2; stroke-dasharray: 5 4; }
+.chart .dot { fill: var(--series-1); }
+.chart .bar { fill: var(--bar); }
+.chart .bar.active { fill: var(--bar-active); }
+.chart .bar-label { fill: var(--text); }
+.chart .bar-label.active { font-weight: 700; }
+.chart .hit { fill: transparent; }
+.chart .tip-bg { fill: var(--text); }
+.chart .tip-text { fill: var(--bg); font-size: 11px; }
+
+.table-wrap { overflow-x: auto; }
+.card-table { margin-top: var(--space-4); }
+table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+th, td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+th { color: var(--text-muted); font-weight: 500; }
+
+details > summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+
+.site-footer { padding-top: var(--space-4); padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom)); font-size: 0.75rem; }
+
+@media (min-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <h1 class="site-title">부동산신탁사 재무 현황</h1>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="다크 모드 전환">◐</button>
+    </div>
+  </header>
+  <main class="container" id="app">
+    <p class="muted">불러오는 중…</p>
+  </main>
+  <footer class="container site-footer">
+    <p id="source-note" class="muted"></p>
+  </footer>
+  <script>
+(function () {
+// ---- js/format.js
+// 숫자·분기 라벨 포맷 유틸
+
+const nf = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 });
+
+// 금액 단위(백만원/억원/원)는 억·조 단위로 줄여 보여 줍니다.
+const TO_EOK = { '원': 1e-8, '천원': 1e-5, '백만원': 1e-2, '억원': 1 };
+
+function formatValue(value, unit) {
+  if (value == null) return '-';
+  if (unit in TO_EOK) {
+    const eok = value * TO_EOK[unit];
+    if (Math.abs(eok) >= 10000) return `${nf.format(eok / 10000)}조`;
+    return `${nf.format(eok)}억`;
+  }
+  if (unit === '%') return `${nf.format(value)}%`;
+  return `${nf.format(value)}${unit ? ` ${unit}` : ''}`;
+}
+
+// 비율 지표는 %p 차이, 금액·수량은 % 변화율
+function formatDelta(curr, prev, unit) {
+  if (curr == null || prev == null) return null;
+  const diff = curr - prev;
+  if (unit === '%') return { sign: Math.sign(diff), text: `${diff >= 0 ? '+' : ''}${nf.format(diff)}%p` };
+  if (prev === 0) return null;
+  const pct = (diff / Math.abs(prev)) * 100;
+  return { sign: Math.sign(diff), text: `${pct >= 0 ? '+' : ''}${nf.format(pct)}%` };
+}
+
+// '202409' → "24.3Q"
+function quarterLabel(yyyymm) {
+  const year = yyyymm.slice(2, 4);
+  const q = Math.ceil(Number(yyyymm.slice(4)) / 3);
+  return `${year}.${q}Q`;
+}
+
+// ---- js/charts.js
+// 의존성 없는 SVG 차트 (선·막대·스파크라인)
+const NS = 'http://www.w3.org/2000/svg';
+
+const el = (name, attrs = {}, text) => {
+  const node = document.createElementNS(NS, name);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text != null) node.textContent = text;
+  return node;
+};
+
+const finite = (arr) => arr.filter((v) => v != null);
+
+function pathOf(points) {
+  let d = '';
+  let pen = false;
+  for (const p of points) {
+    if (p.y == null) { pen = false; continue; }
+    d += `${pen ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    pen = true;
+  }
+  return d;
+}
+
+// series: { values, cls } 배열. labels: x축 라벨. fmt: 값 포맷 함수
+function lineChart(host, { labels, series, fmt }) {
+  const W = Math.max(host.clientWidth, 260); // 실제 폭으로 그려 글자 크기를 유지
+  const H = 220;
+  const m ={ top: 12, right: 12, bottom: 28, left: 56 };
+  const all = series.flatMap((s) => finite(s.values));
+  host.replaceChildren();
+  if (!all.length) { host.textContent = '표시할 데이터가 없습니다.'; return; }
+
+  let lo = Math.min(...all);
+  let hi = Math.max(...all);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const pad = (hi - lo) * 0.1;
+  lo -= pad; hi += pad;
+  const x = (i) => m.left + (i * (W - m.left - m.right)) / Math.max(labels.length - 1, 1);
+  const y = (v) => (v == null ? null : m.top + ((hi - v) / (hi - lo)) * (H - m.top - m.bottom));
+
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': '분기별 추이 차트' });
+  for (let t = 0; t <= 3; t += 1) {
+    const v = lo + ((hi - lo) * t) / 3;
+    const yy = y(v);
+    svg.append(el('line', { class: 'grid', x1: m.left, x2: W - m.right, y1: yy, y2: yy }));
+    svg.append(el('text', { x: m.left - 6, y: yy + 4, 'text-anchor': 'end' }, fmt(v)));
+  }
+  labels.forEach((l, i) => {
+    if (labels.length > 8 && i % 2 === (labels.length - 1) % 2) return;
+    svg.append(el('text', { x: x(i), y: H - 8, 'text-anchor': 'middle' }, l));
+  });
+  for (const s of series) {
+    svg.append(el('path', { class: s.cls, d: pathOf(s.values.map((v, i) => ({ x: x(i), y: y(v) }))) }));
+  }
+  const main = series[0];
+  const tip = el('g', { visibility: 'hidden', 'pointer-events': 'none' });
+  const tipBg = el('rect', { class: 'tip-bg', rx: 6, height: 22 });
+  const tipText = el('text', { class: 'tip-text', y: 15 });
+  tip.append(tipBg, tipText);
+
+  main.values.forEach((v, i) => {
+    if (v == null) return;
+    svg.append(el('circle', { class: 'dot', cx: x(i), cy: y(v), r: 3 }));
+  });
+  const step = (W - m.left - m.right) / Math.max(labels.length - 1, 1);
+  labels.forEach((l, i) => {
+    const hit = el('rect', { class: 'hit', x: x(i) - step / 2, y: 0, width: step, height: H });
+    const show = () => {
+      tipText.textContent = `${l}  ${main.values[i] == null ? '-' : fmt(main.values[i])}`;
+      const w = tipText.getComputedTextLength() + 16;
+      const tx = Math.min(Math.max(x(i) - w / 2, 0), W - w);
+      tipBg.setAttribute('width', w);
+      tipBg.setAttribute('x', tx);
+      tipText.setAttribute('x', tx + 8);
+      tip.setAttribute('transform', `translate(0,${m.top - 10})`);
+      tip.setAttribute('visibility', 'visible');
+    };
+    hit.addEventListener('pointerenter', show);
+    hit.addEventListener('pointerdown', show);
+    svg.append(hit);
+  });
+  svg.addEventListener('pointerleave', () => tip.setAttribute('visibility', 'hidden'));
+  svg.append(tip);
+  host.append(svg);
+}
+
+// 가로 막대 순위. items: { name, value, active }
+function barChart(host, { items, fmt, onSelect }) {
+  host.replaceChildren();
+  const rows = items.filter((d) => d.value != null).sort((a, b) => b.value - a.value);
+  if (!rows.length) { host.textContent = '표시할 데이터가 없습니다.'; return; }
+  const W = Math.max(host.clientWidth, 260);
+  const rowH = 30;
+  const labelW = 96;
+  const valueW = 64;
+  const H = rows.length * rowH + 4;
+  // 0을 기준선으로 두고 음수는 왼쪽으로 그립니다.
+  const lo = Math.min(0, ...rows.map((d) => d.value));
+  const hi = Math.max(0, ...rows.map((d) => d.value));
+  const span = hi - lo || 1;
+  const plotW = W - labelW - valueW * 2;
+  const x0 = labelW + valueW + ((0 - lo) / span) * plotW;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': '신탁사별 비교 막대 차트' });
+  if (lo < 0) svg.append(el('line', { class: 'grid', x1: x0, x2: x0, y1: 0, y2: H }));
+  rows.forEach((d, i) => {
+    const yy = i * rowH + 2;
+    const w = (Math.abs(d.value) / span) * plotW;
+    const neg = d.value < 0;
+    const cls = d.active ? ' active' : '';
+    const row = el('g', { class: 'bar-row' });
+    if (onSelect) {
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      row.setAttribute('data-code', d.code);
+      row.setAttribute('aria-pressed', String(Boolean(d.active)));
+      row.setAttribute('aria-label', `${d.name} ${fmt(d.value)} 선택`);
+      row.addEventListener('click', () => onSelect(d.code));
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(d.code); }
+      });
+    }
+    row.append(el('rect', { class: 'hit', x: 0, y: yy, width: W, height: rowH }));
+    row.append(el('text', { class: `bar-label${cls}`, x: 0, y: yy + 18 }, d.name));
+    row.append(el('rect', { class: `bar${cls}`, x: neg ? x0 - w : x0, y: yy + 4, width: Math.max(w, 1), height: rowH - 10, rx: 4 }));
+    row.append(el('text', {
+      class: `bar-label${cls}`, y: yy + 18, x: neg ? x0 - w - 6 : x0 + w + 6, 'text-anchor': neg ? 'end' : 'start',
+    }, fmt(d.value)));
+    svg.append(row);
+  });
+  host.append(svg);
+}
+
+// 카드용 미니 추이선
+function sparkline(values) {
+  const W = 120;
+  const H = 28;
+  const vs = finite(values);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none', 'aria-hidden': 'true' });
+  if (vs.length < 2) return svg;
+  const lo = Math.min(...vs);
+  const hi = Math.max(...vs);
+  const span = hi - lo || 1;
+  const pts = values.map((v, i) => ({
+    x: (i * W) / Math.max(values.length - 1, 1),
+    y: v == null ? null : 3 + ((hi - v) / span) * (H - 6),
+  }));
+  const path = el('path', { d: pathOf(pts), fill: 'none', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  path.style.stroke = 'var(--series-1)';
+  svg.append(path);
+  return svg;
+}
+
+// ---- js/theme.js
+// 다크 모드 토글 (초기 테마는 index.html 인라인 스크립트가 적용)
+function initTheme(button) {
+  button.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) { /* 저장 실패는 무시 */ }
+  });
+}
+
+// ---- js/main.js
+
+
+
+const app = document.getElementById('app');
+const state = { data: null, company: null, metric: null, quarter: null }; // quarter: 기준 분기 인덱스
+
+const h = (tag, props = {}, ...children) => {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') node.className = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  node.append(...children.filter((c) => c != null));
+  return node;
+};
+
+// 순위 차트용 짧은 이름: "(주)", "주식회사" 제거, "부동산신탁"/"자산신탁" 유지
+const shortName = (name) => name.replace(/\(주\)|주식회사/g, '').trim();
+const median =(arr) => {
+  const v = arr.filter((x) => x != null).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const mid = Math.floor(v.length / 2);
+  return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
+};
+
+// 해시: #/<회사코드>/<지표id>/<기준분기 YYYYMM>
+function readHash() {
+  const [, code, metric, quarter] = location.hash.split('/').map((s) => (s ? decodeURIComponent(s) : null));
+  return { code, metric, quarter };
+}
+
+function writeHash() {
+  const quarter = state.data.meta.quarters[state.quarter];
+  try {
+    history.replaceState(null, '', `#/${[state.company, state.metric, quarter].map(encodeURIComponent).join('/')}`);
+  } catch (e) { /* 샌드박스 iframe(Apps Script)에서는 막힐 수 있음 */ }
+}
+
+function kpiCard(metric, code, quarters) {
+  const values = metric.series[code] ?? [];
+  const idx = state.quarter;
+  const delta = idx >= 4 ? formatDelta(values[idx], values[idx - 4], metric.unit) : null;
+  const card = h('button', {
+    class: 'kpi', type: 'button', 'aria-pressed': String(metric.id === state.metric),
+    onclick: () => { state.metric = metric.id; writeHash(); render(); },
+  },
+  h('span', { class: 'kpi-name' }, metric.basis ? `${metric.name} · ${metric.basis}` : metric.name),
+  h('span', { class: 'kpi-value' }, formatValue(values[idx], metric.unit)),
+  h('span', { class: 'kpi-delta' },
+    delta ? h('span', { class: delta.sign > 0 ? 'up' : delta.sign < 0 ? 'down' : '' }, delta.text) : '–',
+    delta ? ' (전년 동기)' : ''));
+  card.append(sparkline(values));
+  card.setAttribute('aria-label', `${metric.name} ${values[idx] == null ? '자료 없음' : formatValue(values[idx], metric.unit)} (${quarterLabel(quarters[idx])})`);
+  return card;
+}
+
+function render(refocusCode = null) {
+  const { data, company, metric: metricId } = state;
+  const { quarters, featured } = data.meta;
+  const metric = data.metrics.find((m) => m.id === metricId);
+  const co = data.companies.find((c) => c.code === company);
+  const labels = quarters.map(quarterLabel);
+  const fmt = (v) => formatValue(v, metric.unit);
+
+  const root = h('div');
+  if (data.meta.source === 'sample') {
+    root.append(h('p', { class: 'banner' }, '⚠ 화면 확인용 가상 샘플 데이터입니다. 실제 신탁사 수치가 아닙니다. (README의 데이터 수집 방법을 따라 실제 데이터로 교체하세요)'));
+  }
+
+  // 최상단: 제목 + 기준 분기 선택 (최신 분기가 위로 오도록 내림차순)
+  const quarterSelect = h('select', {
+    class: 'select', id: 'quarter',
+    onchange: (e) => { state.quarter = Number(e.target.value); writeHash(); render(); },
+  }, ...quarters.map((q, i) => {
+    const opt = h('option', { value: String(i) }, quarterLabel(q));
+    if (i === state.quarter) opt.selected = true;
+    return opt;
+  }).reverse());
+  root.append(h('div', { class: 'top-row' },
+    h('h2', { class: 'section-title section-title-first' }, '요약'),
+    h('div', { class: 'quarter-picker' }, h('label', { for: 'quarter' }, '기준 분기'), quarterSelect)));
+
+  // 지표 탭 → 선택한 지표의 전체 신탁사 순위 (가장 최근 분기)
+  const tabMetrics = featured.map((id) => data.metrics.find((m) => m.id === id)).filter(Boolean);
+  root.append(metricTabs(tabMetrics, metricId));
+  const rankView = rankCard(metric, data, company, labels);
+  root.append(rankView.section);
+
+  const kpiMetrics = featured.map((id) => data.metrics.find((m) => m.id === id)).filter(Boolean);
+  root.append(h('h2', { class: 'section-title' }, `${co.name} 핵심 지표 (${labels[state.quarter]} 기준)`));
+  root.append(h('div', { class: 'kpi-grid' }, ...kpiMetrics.map((m) => kpiCard(m, company, quarters))));
+
+  // 추이: 선택 신탁사 vs 업계 중앙값
+  const own = metric.series[company] ?? quarters.map(() => null);
+  const peers = quarters.map((_, i) => median(Object.values(metric.series).map((s) => s[i])));
+  const trendHost = h('div', { class: 'chart' });
+
+  // 12분기 수치 표 (그래프와 같은 카드 안)
+  const colClass = (i) => (i === state.quarter ? 'col-active' : '');
+  const head = h('tr', {}, h('th', {}, '분기'), ...labels.map((l, i) => h('th', { class: colClass(i) }, l)));
+  const row = (name, values) => h('tr', {}, h('td', {}, name),
+    ...values.map((v, i) => h('td', { class: colClass(i) }, fmt(v))));
+
+  root.append(h('section', { class: 'card' },
+    h('div', { class: 'card-head' },
+      h('h2', { class: 'card-title' }, `${metric.name} 추이`),
+      h('span', { class: 'card-note' }, `${co.name} · ${labels[0]} ~ ${labels.at(-1)} · 단위: ${metric.unit || '-'}`)),
+    metric.note ? h('p', { class: 'card-note card-basis' }, `※ ${metric.note} (분기 단독 값 아님)`) : null,
+    trendHost,
+    h('div', { class: 'legend' },
+      h('span', {}, h('i', { style: 'background:var(--series-1)' }), co.name),
+      h('span', {}, h('i', { style: 'background:var(--series-2)' }), '신탁사 중앙값')),
+    h('div', { class: 'table-wrap card-table' }, h('table', {},
+      h('thead', {}, head), h('tbody', {}, row(co.name, own), row('신탁사 중앙값', peers))))));
+
+  app.replaceChildren(root);
+  lineChart(trendHost, { labels, fmt, series: [{ values: own, cls: 'line-main' }, { values: peers, cls: 'line-ref' }] });
+  rankView.draw();
+  if (refocusCode) root.querySelector(`[data-code="${CSS.escape(refocusCode)}"]`)?.focus({ preventScroll: true });
+  // 선택된 탭이 가로 스크롤 영역 가운데 오도록 (페이지 세로 스크롤은 건드리지 않음)
+  const bar = root.querySelector('.tabs');
+  const active = bar.querySelector('[aria-selected="true"]');
+  if (active) bar.scrollLeft = active.offsetLeft - (bar.clientWidth - active.offsetWidth) / 2;
+}
+
+// 상단 지표 탭 (좌우 화살표 키로 이동)
+function metricTabs(metrics, activeId) {
+  const choose = (id, refocus) => {
+    state.metric = id;
+    writeHash();
+    render();
+    if (refocus) document.querySelector('[role="tab"][aria-selected="true"]')?.focus();
+  };
+  const tabs = metrics.map((m) => h('button', {
+    class: 'tab', type: 'button', role: 'tab', id: `tab-${m.id}`,
+    'aria-selected': String(m.id === activeId), tabindex: m.id === activeId ? '0' : '-1',
+    onclick: () => choose(m.id, false),
+    onkeydown: (e) => {
+      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      const i = metrics.findIndex((x) => x.id === m.id);
+      choose(metrics[(i + step + metrics.length) % metrics.length].id, true);
+    },
+  }, m.name));
+  // 선택 지표가 탭에 없으면(지표 선택 상자에서 고른 경우) 첫 탭만 키보드 진입점으로 둠
+  if (!metrics.some((m) => m.id === activeId)) tabs[0]?.setAttribute('tabindex', '0');
+  return h('div', { class: 'tabs', role: 'tablist', 'aria-label': '지표 선택' }, ...tabs);
+}
+
+// 신탁사별 순위 카드. section은 DOM, draw는 DOM이 붙은 뒤(폭 측정 가능) 차트를 그림
+function rankCard(metric, data, company, labels) {
+  const rankIdx = state.quarter;
+  const host = h('div', { class: 'chart' });
+  const section = h('section', { class: 'card' },
+    h('div', { class: 'card-head' },
+      h('h2', { class: 'card-title' }, metric.name),
+      h('span', { class: 'card-note' }, `${labels[rankIdx]} 기준 · 단위: ${metric.unit || '-'}`)),
+    metric.note ? h('p', { class: 'card-note card-basis' }, `※ ${metric.note} (분기 단독 값 아님)`) : null,
+    h('p', { class: 'card-note card-basis' }, '신탁사를 누르면 아래 지표가 해당 신탁사로 바뀝니다.'),
+    host);
+  const draw = () => barChart(host, {
+    fmt: (v) => formatValue(v, metric.unit),
+    onSelect: (code) => { state.company = code; writeHash(); render(code); },
+    items: data.companies.map((c) => ({
+      code: c.code, name: shortName(c.name), value: metric.series[c.code]?.[rankIdx] ?? null, active: c.code === company,
+    })),
+  });
+  return { section, draw };
+}
+
+const REFRESH_MS = 30 * 60 * 1000; // 열어 둔 화면의 자동 확인 주기
+
+// Google Apps Script 웹앱 안에서 실행 중인지 (gas/ 빌드 결과물에서만 true)
+const IN_APPS_SCRIPT = typeof google !== 'undefined' && Boolean(google.script?.run);
+
+async function loadData() {
+  if (IN_APPS_SCRIPT) {
+    // 서버 함수 getData()가 JSON 문자열을 돌려줌 (gas/Code.gs)
+    const text = await new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getData();
+    });
+    return JSON.parse(text);
+  }
+  const res = await fetch('data/trusts.json', { cache: 'no-cache' });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+// 갱신 시각(meta.updated)만 다르고 내용이 같으면 같은 데이터로 취급
+const signature = (d) => JSON.stringify({ ...d, meta: { ...d.meta, updated: null } });
+
+function setSourceNote(data) {
+  document.getElementById('source-note').textContent =
+    `출처: ${data.meta.title} · 최신 분기 ${quarterLabel(data.meta.quarters.at(-1))} · 갱신 ${data.meta.updated}`;
+}
+
+function showToast(message) {
+  document.querySelector('.toast')?.remove();
+  const toast = h('div', { class: 'toast', role: 'status' }, message);
+  document.body.append(toast);
+  setTimeout(() => toast.remove(), 6000);
+}
+
+// 열어 둔 화면에서 새 데이터가 배포됐는지 확인하고, 있으면 선택 상태를 유지한 채 다시 그림
+async function refreshData() {
+  let next;
+  try { next = await loadData(); } catch (e) { return; } // 오프라인 등은 조용히 무시
+  const prev = state.data;
+  if (signature(next) === signature(prev)) return;
+
+  const wasLatest = state.quarter === prev.meta.quarters.length - 1;
+  const quarterCode = prev.meta.quarters[state.quarter];
+  const latestChanged = next.meta.quarters.at(-1) !== prev.meta.quarters.at(-1);
+  state.data = next;
+  if (!next.companies.some((c) => c.code === state.company)) state.company = next.companies[0].code;
+  if (!next.metrics.some((m) => m.id === state.metric)) state.metric = next.meta.featured[0] ?? next.metrics[0].id;
+  const idx = next.meta.quarters.indexOf(quarterCode);
+  state.quarter = wasLatest || idx < 0 ? next.meta.quarters.length - 1 : idx; // 최신 분기를 보던 중이면 새 최신으로
+  writeHash();
+  setSourceNote(next);
+  render();
+  showToast(latestChanged
+    ? `새 분기(${quarterLabel(next.meta.quarters.at(-1))}) 데이터가 반영되었습니다.`
+    : '데이터가 갱신되었습니다.');
+}
+
+async function init() {
+  initTheme(document.getElementById('theme-toggle'));
+  try {
+    state.data = await loadData();
+  } catch (e) {
+    app.replaceChildren(h('p', { class: 'banner' }, '데이터를 불러오지 못했습니다. 네트워크를 확인해 주세요.'));
+    return;
+  }
+  const { data } = state;
+  const hash = readHash();
+  state.company = data.companies.some((c) => c.code === hash.code) ? hash.code : data.companies[0].code;
+  const quarterIdx = data.meta.quarters.indexOf(hash.quarter);
+  state.quarter = quarterIdx >= 0 ? quarterIdx : data.meta.quarters.length - 1; // 기본: 최신 분기
+  state.metric = data.metrics.some((m) => m.id === hash.metric) ? hash.metric : (data.meta.featured[0] ?? data.metrics[0].id);
+  setSourceNote(data);
+  render();
+
+  // 다시 보이게 되거나(탭 전환·앱 복귀) 30분마다 새 데이터 확인
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshData(); });
+  setInterval(() => { if (!document.hidden) refreshData(); }, REFRESH_MS);
+
+  let lastWidth = innerWidth;
+  addEventListener('resize', () => {
+    if (innerWidth !== lastWidth) { lastWidth = innerWidth; render(); }
+  });
+  if (!IN_APPS_SCRIPT && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

@@ -109,6 +109,10 @@ FISIS 인증키는 비밀이라 방문자의 브라우저에서 FISIS를 직접 
 
 ---
 
+## 대안: Google Apps Script 웹앱
+
+구글 계정으로 접근을 제한하고 싶다면 같은 앱을 Apps Script로도 배포할 수 있습니다. 홈화면 설치(PWA)와 주소 공유는 안 되는 제약이 있습니다. 자세한 방법은 [gas/README.md](gas/README.md)를 보세요.
+
 ## 대안: Cloudflare Pages
 
 GitHub Pages로 충분하지만 Cloudflare Pages를 쓰려면:

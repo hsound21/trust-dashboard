@@ -33,7 +33,9 @@ function readHash() {
 
 function writeHash() {
   const quarter = state.data.meta.quarters[state.quarter];
-  history.replaceState(null, '', `#/${[state.company, state.metric, quarter].map(encodeURIComponent).join('/')}`);
+  try {
+    history.replaceState(null, '', `#/${[state.company, state.metric, quarter].map(encodeURIComponent).join('/')}`);
+  } catch (e) { /* 샌드박스 iframe(Apps Script)에서는 막힐 수 있음 */ }
 }
 
 function kpiCard(metric, code, quarters) {
@@ -171,7 +173,17 @@ function rankCard(metric, data, company, labels) {
 
 const REFRESH_MS = 30 * 60 * 1000; // 열어 둔 화면의 자동 확인 주기
 
+// Google Apps Script 웹앱 안에서 실행 중인지 (gas/ 빌드 결과물에서만 true)
+const IN_APPS_SCRIPT = typeof google !== 'undefined' && Boolean(google.script?.run);
+
 async function loadData() {
+  if (IN_APPS_SCRIPT) {
+    // 서버 함수 getData()가 JSON 문자열을 돌려줌 (gas/Code.gs)
+    const text = await new Promise((resolve, reject) => {
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).getData();
+    });
+    return JSON.parse(text);
+  }
   const res = await fetch('data/trusts.json', { cache: 'no-cache' });
   if (!res.ok) throw new Error(res.status);
   return res.json();
@@ -240,7 +252,7 @@ async function init() {
   addEventListener('resize', () => {
     if (innerWidth !== lastWidth) { lastWidth = innerWidth; render(); }
   });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!IN_APPS_SCRIPT && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 init();
